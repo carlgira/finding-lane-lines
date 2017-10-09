@@ -4,7 +4,7 @@ from moviepy.editor import VideoFileClip
 import numpy as np
 import cv2
 from sklearn.cluster import MeanShift, estimate_bandwidth
-from scipy.interpolate import interp1d
+from sklearn import datasets, linear_model
 
 
 def grayscale(img):
@@ -87,12 +87,39 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
 	# Remove vertical and horizontal lines
 	lines = lines[np.logical_and(lines[:,:,2]-lines[:,:,0] != 0, lines[:,:,3]-lines[:,:,1] != 0 )]
 
+	# Removing
+	lines = lines[abs((lines[:,3]-lines[:,1])/(lines[:,2]-lines[:,0])) > 0.4]
+
 	# Slopes and Incetercept of lines
+	#slopes = (lines[:,3]-lines[:,1])/(lines[:,2]-lines[:,0])
+
+
+	#left_lines = lines[slopes > 0]
+	#right_lines = lines[slopes < 0]
+
+	# Linear regression to smooth the input data
+	#left_regr = linear_model.LinearRegression()
+	#left_regr.fit(left_lines[:,[0,2]], left_lines[:,[1,3]])
+	#left_lines[:,[1,3]] = left_regr.predict(left_lines[:,[0,2]])
+
+	# Linear regression to smooth the input data
+	#right_regr = linear_model.LinearRegression()
+	#right_regr.fit(right_lines[:,[0,2]], right_lines[:,[1,3]])
+	#right_lines[:,[1,3]] = right_regr.predict(right_lines[:,[0,2]])
+
+	#lines = np.append(left_lines, right_lines, axis=0)
+
+	#slopes = (lines[:,3]-lines[:,1])/(lines[:,2]-lines[:,0])
+
 	slopes = (lines[:,3]-lines[:,1])/(lines[:,2]-lines[:,0])
 	intercept = lines[:,1] - slopes*lines[:,0]
 
+
+
+
 	# Calculate each line size
 	weights = np.linalg.norm(lines[:,[2,3]] - lines[:,[0,1]], axis=1)
+
 
 	# Creating tuples of slopes and intercept for right and left lane
 	left_lines = np.array(list(zip(slopes[slopes > 0].tolist(), intercept[slopes > 0].tolist())))
@@ -198,6 +225,6 @@ def process_video(video, video_output):
 	clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
 	clip.write_videofile(video_output, audio=False)
 
-process_video("test_videos/solidWhiteRight.mp4", 'test_videos_output/solidWhiteRight.mp4')
-process_video("test_videos/solidYellowLeft.mp4", 'test_videos_output/solidYellowLeft.mp4')
-process_video("test_videos/challenge.mp4", 'test_videos_output/challenge.mp4')
+process_video("test_videos/solidWhiteRight.mp4", 'output/solidWhiteRight.mp4')
+process_video("test_videos/solidYellowLeft.mp4", 'output/solidYellowLeft.mp4')
+process_video("test_videos/challenge.mp4", 'output/challenge.mp4')
