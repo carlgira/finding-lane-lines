@@ -5,6 +5,7 @@ import numpy as np
 import cv2
 from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn import datasets, linear_model
+from sklearn.cluster import KMeans
 
 
 def grayscale(img):
@@ -45,6 +46,8 @@ def region_of_interest(img, vertices):
 	#filling pixels inside the polygon defined by "vertices" with the fill color
 	cv2.fillPoly(mask, vertices, ignore_mask_color)
 
+
+
 	#returning the image only where mask pixels are nonzero
 	masked_image = cv2.bitwise_and(img, mask)
 	return masked_image
@@ -84,15 +87,34 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
 	this function with the weighted_img() function below
 	"""
 
+	imshape = img.shape
+
 	# Remove vertical and horizontal lines
 	lines = lines[np.logical_and(lines[:,:,2]-lines[:,:,0] != 0, lines[:,:,3]-lines[:,:,1] != 0 )]
 
-	# Removing
-	lines = lines[abs((lines[:,3]-lines[:,1])/(lines[:,2]-lines[:,0])) > 0.4]
+	kmeans = KMeans(n_clusters=2, init=np.array([[0,imshape[0]/2, 0,imshape[0]/2 ], [imshape[1],imshape[0]/2,imshape[1],imshape[0]/2 ]]), random_state=0).fit(lines)
+
+	slopes = (lines[:,3]-lines[:,1])/(lines[:,2]-lines[:,0])
+
+	#left_lines = lines[kmeans.labels_ == 0]
+	#right_lines = lines[kmeans.labels_ == 1]
+
+	left_lines = lines[lines[:,0] < imshape[1]/2]
+	right_lines = lines[lines[:,0] > imshape[1]/2]
+
+	#left_lines = lines[slopes > 0]
+	#right_lines = lines[slopes < 0]
+
+	#for line in left_lines:
+	#	x1,y1,x2,y2 = line
+	#	cv2.line(img, (x1, y1), (x2, y2), [0, 255, 0], 3)
+
+	#for line in right_lines:
+	#	x1,y1,x2,y2 = line
+	#	cv2.line(img, (x1, y1), (x2, y2), [0, 0, 255], 3)
 
 	# Slopes and Incetercept of lines
 	#slopes = (lines[:,3]-lines[:,1])/(lines[:,2]-lines[:,0])
-
 
 	#left_lines = lines[slopes > 0]
 	#right_lines = lines[slopes < 0]
@@ -107,31 +129,20 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
 	#right_regr.fit(right_lines[:,[0,2]], right_lines[:,[1,3]])
 	#right_lines[:,[1,3]] = right_regr.predict(right_lines[:,[0,2]])
 
-	#lines = np.append(left_lines, right_lines, axis=0)
-
-	#slopes = (lines[:,3]-lines[:,1])/(lines[:,2]-lines[:,0])
-
-	slopes = (lines[:,3]-lines[:,1])/(lines[:,2]-lines[:,0])
-	intercept = lines[:,1] - slopes*lines[:,0]
 
 
+	left_regr = linear_model.LinearRegression()
+	left_regr.fit(np.reshape(left_lines[:,[0,2]], (-1,1)), np.reshape(left_lines[:,[1,3]],(-1,1)))
+	#left_lines = left_regr.predict(np.reshape(np.linspace(imshape[0]*5/8, imshape[0], num=10), (-1,1)))
+
+	# Linear regression to smooth the input data
+	right_regr = linear_model.LinearRegression()
+	right_regr.fit(np.reshape(right_lines[:,[0,2]],(-1,1)), np.reshape(right_lines[:,[1,3]],(-1,1)))
+	#right_lines = right_regr.predict(np.reshape(np.linspace(imshape[0]*5/8, imshape[0], num=10), (-1,1)))
 
 
-	# Calculate each line size
-	weights = np.linalg.norm(lines[:,[2,3]] - lines[:,[0,1]], axis=1)
-
-
-	# Creating tuples of slopes and intercept for right and left lane
-	left_lines = np.array(list(zip(slopes[slopes > 0].tolist(), intercept[slopes > 0].tolist())))
-	right_lines = np.array(list(zip(slopes[slopes < 0].tolist(), intercept[slopes < 0])))
-
-	# Size array of right and left lane
-	left_weights = weights[slopes > 0]
-	right_weights = weights[slopes < 0]
-
-	# Calculate average slope and intercept using lines sizes as weights (bigger line, more weight)
-	left_lane = np.dot(left_weights,  left_lines) /np.sum(left_weights)
-	right_lane = np.dot(right_weights, right_lines)/np.sum(right_weights)
+	left_lane = [left_regr.coef_, left_regr.intercept_]
+	right_lane = [right_regr.coef_, right_regr.intercept_]
 
 	def draw_line(y1, y2, slope, intercept):
 		x1 = int((y1 - intercept)/(slope))
@@ -140,7 +151,7 @@ def draw_lines(img, lines, color=[255, 0, 0], thickness=2):
 		y2 = int(y2)
 		cv2.line(img, (x1, y1), (x2, y2), color, thickness)
 
-	imshape = img.shape
+
 
 	if len(right_lines)>0:
 		draw_line(imshape[0], imshape[0]*5/8,right_lane[0],right_lane[1])
@@ -179,7 +190,9 @@ def weighted_img(img, initial_img, α=0.8, β=1., λ=0.):
 
 def process_image(image):
 	imshape = image.shape
-	gray = grayscale(image)
+	#gray = grayscale(image)
+
+	gray = select_white_yellow(image)
 
 	kernel_size = 9
 	blur_gray = gaussian_blur(gray, kernel_size)
@@ -189,7 +202,7 @@ def process_image(image):
 	edges = canny(blur_gray, low_threshold, high_threshold)
 
 
-	vertices = np.array([[(80, imshape[0]),(460, imshape[0]/2), (470, int(imshape[0]/2)), (imshape[1]-80,imshape[0])]], dtype=np.int32)
+	vertices = np.array([[(60, imshape[0]),(imshape[1]*7/16, imshape[0]*5/8), (imshape[1]*9/16, int(imshape[0]*5/8)), (imshape[1]-60,imshape[0])]], dtype=np.int32)
 	masked_edges = region_of_interest(edges, vertices)
 
 
@@ -207,18 +220,38 @@ def process_image(image):
 	# Draw the lines on the edge image
 	lines_edges = cv2.addWeighted(copy_image, 0.8, line_img, 1, 0)
 
+	#cv2.fillPoly(lines_edges, vertices, [255,0,0, 200])
+
 	#plt.imshow(lines_edges)
 	#plt.show()
 
+
 	return lines_edges
 
+def convert_hls(image):
+	return cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
 
-#process_image(mpimg.imread('test_images/solidWhiteCurve.jpg'))
-#process_image(mpimg.imread('test_images/solidWhiteRight.jpg'))
-#process_image(mpimg.imread('test_images/solidYellowCurve.jpg'))
-#process_image(mpimg.imread('test_images/solidYellowCurve2.jpg'))
-#process_image(mpimg.imread('test_images/solidYellowLeft.jpg'))
-#process_image(mpimg.imread('test_images/whiteCarLaneSwitch.jpg'))
+def select_white_yellow(image):
+	converted = convert_hls(image)
+	# white color mask
+	lower = np.uint8([  0, 200,   0])
+	upper = np.uint8([255, 255, 255])
+	white_mask = cv2.inRange(converted, lower, upper)
+	# yellow color mask
+	lower = np.uint8([ 10,   0, 100])
+	upper = np.uint8([ 40, 255, 255])
+	yellow_mask = cv2.inRange(converted, lower, upper)
+	# combine the mask
+	mask = cv2.bitwise_or(white_mask, yellow_mask)
+	return cv2.bitwise_and(image, image, mask = mask)
+
+
+process_image(mpimg.imread('test_images/solidWhiteCurve.jpg'))
+process_image(mpimg.imread('test_images/solidWhiteRight.jpg'))
+process_image(mpimg.imread('test_images/solidYellowCurve.jpg'))
+process_image(mpimg.imread('test_images/solidYellowCurve2.jpg'))
+process_image(mpimg.imread('test_images/solidYellowLeft.jpg'))
+process_image(mpimg.imread('test_images/whiteCarLaneSwitch.jpg'))
 
 def process_video(video, video_output):
 	clip1 = VideoFileClip(video)
