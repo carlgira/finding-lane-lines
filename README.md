@@ -1,5 +1,18 @@
-# FIND LANE LINES
 
+
+# FIND LANE LINES
+This project is about building a lane line detector, it is part of the Udacity self-driving car Nanodegree. 
+
+The project contains the following files:
+
+- Readme.md (This file): Writeup of the project
+- finding-lane-lines.ipynb: Notebook with the python code and comments
+- finding-lane-lines.py: Same code whitout the annotations of the notebook.
+- test_images: Folder with test images
+- test_videos: Folder with test videos
+- output: Folder with image, video and gif output.
+
+# Introduction
 Next, is all the algorithm that i wrote to find lane lines from the image and test videos. I'm adding comments about the functions but also the alternatives that i tried during the project.
 
 
@@ -62,17 +75,13 @@ Function to process the videos using the process_image
 
 ## Images
 
-
-
-<img src="./output/solidWhiteCurve.jpg",width=400,height=200 />
-
 |                                                          |                                                   |
 |-----------------------------------------------------------|----------------------------------------------------|
-|<img src="./output/solidWhiteCurve.jpg",width=400,height=200 />|<img src="output/solidWhiteRight.jpg",width=400,height=200>|
+|<img src="./output/solidWhiteCurve.jpg" width=400 height=200 />|<img src="output/solidWhiteRight.jpg" width=400 height=200/>|
 |output/solidWhiteCurve.jpg|output/solidWhiteRight.jpg|
-|<img src="output/solidYellowCurve.jpg",width=400,height=200>|<img src="output/solidYellowCurve2.jpg",width=400,height=200>|
+|<img src="output/solidYellowCurve.jpg" width=400 height=200/>|<img src="output/solidYellowCurve2.jpg" width=400 height=200/>|
 |output/solidYellowCurve.jpg|output/solidYellowCurve2.jpg|
-|<img src="output/solidYellowLeft.jpg",width=400,height=200>|<img src="output/whiteCarLaneSwitch.jpg",width=400,height=200>|
+|<img src="output/solidYellowLeft.jpg" width=400 height=200/>|<img src="output/whiteCarLaneSwitch.jpg" width=400 height=200>|
 |output/solidYellowLeft.jpg|output/whiteCarLaneSwitch.jpg|
 
 
@@ -80,9 +89,9 @@ Function to process the videos using the process_image
 
 | |
 |-|
-|<video controls src="output/solidWhiteRight.mp4",width=400,height=200/>|
+|<img src="output/solidWhiteRight.gif"/>|
 |output/solidWhiteRight.mp4|
-|<video controls src="output/solidYellowLeft.mp4",width=400,height=200 />|
+|<img src="output/solidYellowLeft.gif"/>|
 |output/solidYellowLeft.mp4|
 
 
@@ -90,7 +99,7 @@ Function to process the videos using the process_image
 
 ||
 |-|
-|<video controls src="output/challenge.mp4",width=400,height=200/>|
+|<img src="output/challenge.gif"/>|
 |output/challenge.mp4|
 
 
