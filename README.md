@@ -140,5 +140,9 @@ There are two things that were difficult for me,
 
 - I was getting very bad results in the challenge video and i had to look for a solution. The image HSL transformation and white and yellow color mask helps a lot to the program to identify more easily all the lines.
 
+## References
+
+I got some ideas from https://github.com/naokishibuya/car-finding-lane-lines specially the code for the HSL transformation and color separation
+
 
 
